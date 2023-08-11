@@ -1,0 +1,180 @@
+---
+title: "BAMM_for_marronoid"
+author: "Jacob Gorneau"
+date: "2023-08-10"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(phytools)
+library(BAMMtools)
+IGtree=read.tree("BAMM_est_RTA_Sanger/RTA_sanger_50_trim_rooted_ultra.tre")
+setBAMMpriors(IGtree,total.taxa = 3414,outfile="BAMM_wsc_RTA_Sanger/myPriors_wsc.txt")
+setBAMMpriors(IGtree,total.taxa = 5345,outfile="BAMM_est_RTA_Sanger/myPriors_est.txt")
+```
+
+```{r}
+#est
+tree=read.tree("BAMM_est_RTA_Sanger/RTA_sanger_50_trim_rooted_ultra.tre")
+edata <- getEventData(tree, eventdata = "BAMM_est_RTA_Sanger/event_data_family.txt", burnin=0.1)
+mcmcout <- read.csv("BAMM_est_RTA_Sanger/mcmc_out_marronoid_est.txt", header=T)
+plot(mcmcout$logLik ~ mcmcout$generation)
+burnstart <- floor(0.1 * nrow(mcmcout))
+postburn <- mcmcout[burnstart:nrow(mcmcout), ]
+write.csv(postburn,"BAMM_est_RTA_Sanger/post_mcmc_out_marronoid_est.txt")
+library(coda)
+effectiveSize(postburn$N_shifts)
+effectiveSize(postburn$logLik)
+
+post_probs <- table(postburn$N_shifts) / nrow(postburn)
+
+names(post_probs)
+
+shift_probs <- summary(edata)
+
+postfile <- "BAMM_est_RTA_Sanger/post_mcmc_out_marronoid_est.txt"
+bfmat <- computeBayesFactors(postfile, expectedNumberOfShifts=1, burnin=0.1)
+plotPrior(postfile,expectedNumberOfShifts = 1)
+
+cst <- cumulativeShiftProbsTree(edata)
+edgecols <- rep('black', length(tree$edge.length))
+is_highprobshift <- cst$edge.length >= 0.95
+edgecols[ is_highprobshift ] <- "red"
+plot.phylo(tree, edge.color = edgecols)
+
+best <- getBestShiftConfiguration(edata, expectedNumberOfShifts=1)
+pdf(file="BAMM_est_RTA_Sanger/BAMMshifts.pdf",width=32, height=24)
+plot.bammdata(best, lwd = 2,labels=TRUE)
+addBAMMshifts(best, cex=2.5)
+dev.off()
+```
+
+```{r}
+#wsc
+library(phytools)
+library(phylotools)
+library(BAMMtools)
+tree=read.tree("BAMM_wsc_RTA_sanger/RTA_sanger_50_trim_rooted_ultra.tre")
+edata <- getEventData(tree, eventdata = "BAMM_wsc_RTA_sanger/event_data_family.txt", burnin=0.1)
+mcmcout <- read.csv("BAMM_wsc_RTA_sanger/mcmc_out_marronoid_wsc.txt", header=T)
+plot(mcmcout$logLik ~ mcmcout$generation)
+burnstart <- floor(0.1 * nrow(mcmcout))
+postburn <- mcmcout[burnstart:nrow(mcmcout), ]
+write.csv(postburn,"BAMM_wsc_RTA_sanger/post_mcmc_out_marronoid_wsc.txt")
+library(coda)
+effectiveSize(postburn$N_shifts)
+effectiveSize(postburn$logLik)
+
+post_probs <- table(postburn$N_shifts) / nrow(postburn)
+
+names(post_probs)
+
+shift_probs <- summary(edata)
+
+postfile <- "BAMM_wsc_RTA_sanger/post_mcmc_out_marronoid_wsc.txt"
+bfmat <- computeBayesFactors(postfile, expectedNumberOfShifts=1, burnin=0.1)
+plotPrior(postfile,expectedNumberOfShifts = 1)
+
+cst <- cumulativeShiftProbsTree(edata)
+edgecols <- rep('black', length(tree$edge.length))
+is_highprobshift <- cst$edge.length >= 0.95
+edgecols[ is_highprobshift ] <- "red"
+
+plot.phylo(tree, edge.color = edgecols)
+
+best <- getBestShiftConfiguration(edata, expectedNumberOfShifts=1)
+
+pdf(file="BAMM_wsc_RTA_sanger/BAMMshifts.pdf",width=32, height=24)
+plot.bammdata(best, lwd = 2,labels=TRUE)
+addBAMMshifts(best, cex=2.5)
+
+dev.off()
+```
+
+```{r}
+#uceonly
+IGtree=read.tree("BAMM_est_RTA_only/RTA_sanger_50_trim_ultra_rooted_UCE_only.tre")
+setBAMMpriors(IGtree,total.taxa = 3414,outfile="BAMM_wsc_RTA_only/myPriors_wsc.txt")
+setBAMMpriors(IGtree,total.taxa = 5345,outfile="BAMM_est_RTA_only/myPriors_est.txt")
+```
+
+```{r}
+#est uce only
+library(phytools)
+library(phylotools)
+library(BAMMtools)
+tree=read.tree("BAMM_est_RTA_only/RTA_sanger_50_trim_ultra_rooted_UCE_only.tre")
+edata <- getEventData(tree, eventdata = "BAMM_est_RTA_only/event_data_family.txt", burnin=0.1)
+mcmcout <- read.csv("BAMM_est_RTA_only/mcmc_out_marronoid_est.txt", header=T)
+plot(mcmcout$logLik ~ mcmcout$generation)
+burnstart <- floor(0.1 * nrow(mcmcout))
+postburn <- mcmcout[burnstart:nrow(mcmcout), ]
+write.csv(postburn,"BAMM_est_RTA_only/post_mcmc_out_marronoid_est.txt")
+library(coda)
+effectiveSize(postburn$N_shifts)
+effectiveSize(postburn$logLik)
+
+post_probs <- table(postburn$N_shifts) / nrow(postburn)
+
+names(post_probs)
+
+shift_probs <- summary(edata)
+
+postfile <- "BAMM_est_RTA_only/post_mcmc_out_marronoid_est.txt"
+bfmat <- computeBayesFactors(postfile, expectedNumberOfShifts=1, burnin=0.1)
+plotPrior(postfile,expectedNumberOfShifts = 1)
+
+cst <- cumulativeShiftProbsTree(edata)
+edgecols <- rep('black', length(tree$edge.length))
+is_highprobshift <- cst$edge.length >= 0.95
+edgecols[ is_highprobshift ] <- "red"
+plot.phylo(tree, edge.color = edgecols)
+
+best <- getBestShiftConfiguration(edata, expectedNumberOfShifts=1)
+pdf(file="BAMM_est_RTA_only/BAMMshifts.pdf",width=32, height=24)
+plot.bammdata(best, lwd = 2,labels=TRUE)
+addBAMMshifts(best, cex=2.5)
+dev.off()
+```
+
+```{r}
+#wsc uce only
+library(phytools)
+library(phylotools)
+library(BAMMtools)
+tree=read.tree("BAMM_wsc_RTA_only/RTA_sanger_50_trim_ultra_rooted_UCE_only.tre")
+edata <- getEventData(tree, eventdata = "BAMM_wsc_RTA_only/event_data_family.txt", burnin=0.1)
+mcmcout <- read.csv("BAMM_wsc_RTA_only/mcmc_out_marronoid_wsc.txt", header=T)
+plot(mcmcout$logLik ~ mcmcout$generation)
+burnstart <- floor(0.1 * nrow(mcmcout))
+postburn <- mcmcout[burnstart:nrow(mcmcout), ]
+write.csv(postburn,"BAMM_wsc_RTA_only/post_mcmc_out_marronoid_wsc.txt")
+library(coda)
+effectiveSize(postburn$N_shifts)
+effectiveSize(postburn$logLik)
+
+post_probs <- table(postburn$N_shifts) / nrow(postburn)
+
+names(post_probs)
+
+shift_probs <- summary(edata)
+
+postfile <- "BAMM_wsc_RTA_only/post_mcmc_out_marronoid_wsc.txt"
+bfmat <- computeBayesFactors(postfile, expectedNumberOfShifts=1, burnin=0.1)
+plotPrior(postfile,expectedNumberOfShifts = 1)
+
+cst <- cumulativeShiftProbsTree(edata)
+edgecols <- rep('black', length(tree$edge.length))
+is_highprobshift <- cst$edge.length >= 0.95
+edgecols[ is_highprobshift ] <- "red"
+plot.phylo(tree, edge.color = edgecols)
+
+best <- getBestShiftConfiguration(edata, expectedNumberOfShifts=1)
+pdf(file="BAMM_wsc_RTA_only/BAMMshifts.pdf",width=32, height=24)
+plot.bammdata(best, lwd = 2,labels=TRUE)
+addBAMMshifts(best, cex=2.5)
+dev.off()
+```
